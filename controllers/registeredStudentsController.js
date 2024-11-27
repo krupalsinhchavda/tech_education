@@ -4,7 +4,7 @@ const registeredStudentsService = require('../services/registeredStudentsService
 const addStudent = async (req, res) => {
     try {
         const data = req.body;
-        const result = await registeredStudentsService.addStudent(data);
+        const result = await registeredStudentsService.addStudentAndUser(data);
         res.status(201).json({ message: "Student added successfully", data: result });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -55,10 +55,27 @@ const getAllStudents = async (req, res) => {
     }
 };
 
+// Get students by BranchID
+const getStudentsByBranch = async (req, res) => {
+    const { branchID } = req.params;
+
+    try {
+        if (!branchID) {
+            return res.status(400).json({ error: "BranchID is required" });
+        }
+
+        const result = await registeredStudentsService.getStudentsByBranch(branchID);
+        res.status(200).json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 module.exports = {
     addStudent,
     updateStudent,
     deleteStudent,
     getStudentById,
     getAllStudents,
+    getStudentsByBranch
 };

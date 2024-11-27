@@ -2,12 +2,16 @@ const dbconnection = require('../config/database');
 
 // Add a new branch admin
 const addBranchAdmin = async (adminData) => {
-    const { FirstName, LastName, PhoneNumber, Address, Email, Image, UserName, Password, IsActive, BranchID, RoleId } = adminData;
+    const {
+        FirstName, LastName, PhoneNumber, Address, Email, Image,
+        UserName, Password, BranchID, RoleId
+    } = adminData;
+
     const query = `
         INSERT INTO branchadmin 
-        (FirstName, LastName, PhoneNumber, Address, Email, Image, UserName, Password, IsActive, BranchID, RoleId) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-    const values = [FirstName, LastName, PhoneNumber, Address, Email, Image, UserName, Password, IsActive, BranchID, RoleId];
+        (FirstName, LastName, PhoneNumber, Address, Email, Image, UserName, Password, BranchID, RoleId) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    const values = [FirstName, LastName, PhoneNumber, Address, Email, Image, UserName, Password, BranchID, RoleId];
 
     return new Promise((resolve, reject) => {
         dbconnection.query(query, values, (error, results) => {
@@ -15,6 +19,54 @@ const addBranchAdmin = async (adminData) => {
             resolve({ BranchAdminID: results.insertId });
         });
     });
+};
+
+const addUser = async (adminData) => {
+    const {
+        FirstName, LastName, Email, PhoneNumber, Address, UserName, Password,
+        RoleId, BranchId, ProfilePicture
+    } = adminData;
+
+    const query = `
+        INSERT INTO users 
+        (FirstName, LastName, Email, PhoneNumber, Address, UserName, Password, RoleId, BranchId, ProfilePicture) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    const values = [FirstName, LastName, Email, PhoneNumber, Address, UserName, Password, RoleId, BranchId, ProfilePicture];
+
+    return new Promise((resolve, reject) => {
+        dbconnection.query(query, values, (error, results) => {
+            if (error) return reject(error);
+            resolve({ UserID: results.insertId });
+        });
+    });
+};
+
+// Function to add a Branch Admin and also add it to Users
+const addBranchAdminAndUser = async (adminData) => {
+    try {
+        // Step 1: Add the admin to the branchadmin table
+        const branchAdmin = await addBranchAdmin(adminData);
+
+        // Step 2: Add the same admin to the users table if branchadmin is added successfully
+        const user = await addUser({
+            ...adminData,
+            BranchId: adminData.BranchID, // Map BranchID to BranchId for users table
+            ProfilePicture: adminData.Image // Map Image to ProfilePicture for users table
+        });
+
+        return {
+            success: true,
+            message: 'Branch admin and user added successfully',
+            branchAdminID: branchAdmin.BranchAdminID,
+            userID: user.UserID
+        };
+    } catch (error) {
+        return {
+            success: false,
+            message: 'Error occurred while adding branch admin or user',
+            error: error.message
+        };
+    }
 };
 
 // Update a branch admin by ID
@@ -76,5 +128,6 @@ module.exports = {
     updateBranchAdmin,
     deleteBranchAdmin,
     getBranchAdminById,
-    getAllBranchAdmins, // Add this to the exports
+    getAllBranchAdmins, // Add this to the exports,
+    addBranchAdminAndUser
 };

@@ -56,10 +56,38 @@ const getFeeById = async (FeesId) => {
 
 // Get all fee records
 const getAllFees = async () => {
-    const query = `SELECT * FROM fees`;
+    const query = `
+        SELECT 
+            f.FeesId,
+            f.RegNo,
+            f.Amount,
+            f.CreatedOn,
+            f.ModifiedOn,
+            f.Name,
+            b.BranchName,
+            c.CourseName
+        FROM 
+            fees f
+        JOIN 
+            branch b ON f.BranchId = b.BranchId
+        JOIN 
+            course c ON f.CourseId = c.CourseId;
+    `;
 
     return new Promise((resolve, reject) => {
         dbconnection.query(query, (error, results) => {
+            if (error) return reject(error);
+            resolve(results);
+        });
+    });
+};
+
+// Get fees by BranchID
+const getFeesByBranch = async (branchID) => {
+    const query = `SELECT * FROM studentfees WHERE BranchId = ?`;
+
+    return new Promise((resolve, reject) => {
+        dbconnection.query(query, [branchID], (error, results) => {
             if (error) return reject(error);
             resolve(results);
         });
@@ -72,4 +100,5 @@ module.exports = {
     deleteFee,
     getFeeById,
     getAllFees,
+    getFeesByBranch
 };

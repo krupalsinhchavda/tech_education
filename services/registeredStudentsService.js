@@ -2,18 +2,24 @@ const dbconnection = require('../config/database');
 
 // Add a new student
 const addStudent = async (data) => {
-    const { FormNo, CenRegNo, AdmissionDate, CourseID, RoleId, BranchId, RegFees, Surname, Name,
-        SonOfDaughterOf, BirthDate, GenderId, Address, City, State, Pincode, MobileNumber,
-        AlternateMobileNumber, Password, StudentImage, CourseStartDate, CourseEndDate } = data;
+    const {
+        FormNo, CenRegNo, AdmissionDate, courseId, RoleId, branchId, RegFees, Surname, Name,
+        SonOfDaughterOf, BirthDate, Gender, Address, City, State, Pincode, MobileNumber, Password, StudentImage, CourseStartDate, CourseEndDate
+    } = data;
 
-    const query = `INSERT INTO registeredstudents (FormNo, CenRegNo, AdmissionDate, CourseID, RoleId, BranchId, 
-                  RegFees, Surname, Name, SonOfDaughterOf, BirthDate, GenderId, Address, City, State, Pincode, 
-                  MobileNumber, AlternateMobileNumber, Password, StudentImage, CourseStartDate, CourseEndDate)
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    const query = `
+        INSERT INTO registeredstudents 
+        (FormNo, CenRegNo, AdmissionDate, CourseID, RoleId, BranchId, RegFees, Surname, Name, SonOfDaughterOf, 
+         BirthDate, Gender, Address, City, State, Pincode, MobileNumber, Password, 
+         StudentImage, CourseStartDate, CourseEndDate)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
 
-    const values = [FormNo, CenRegNo, AdmissionDate, CourseID, RoleId, BranchId, RegFees, Surname, Name,
-        SonOfDaughterOf, BirthDate, GenderId, Address, City, State, Pincode, MobileNumber,
-        AlternateMobileNumber, Password, StudentImage, CourseStartDate, CourseEndDate];
+    const values = [
+        FormNo, CenRegNo, AdmissionDate, courseId, RoleId, branchId, RegFees, Surname, Name,
+        SonOfDaughterOf, BirthDate, Gender, Address, City, State, Pincode, MobileNumber,
+        Password, StudentImage, CourseStartDate, CourseEndDate
+    ];
 
     return new Promise((resolve, reject) => {
         dbconnection.query(query, values, (error, results) => {
@@ -23,21 +29,78 @@ const addStudent = async (data) => {
     });
 };
 
+const addUser = async (userData) => {
+    const {
+        FirstName, LastName, Email, PhoneNumber, Address, UserName, Password, RoleId, StudentId,
+        branchId, ProfilePicture
+    } = userData;
+
+    const query = `
+        INSERT INTO users 
+        (FirstName, LastName, Email, PhoneNumber, Address, UserName, Password, RoleId, StudentId, BranchId, ProfilePicture)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const values = [
+        FirstName, LastName, Email, PhoneNumber, Address, UserName, Password, RoleId, StudentId, branchId, ProfilePicture
+    ];
+
+    return new Promise((resolve, reject) => {
+        dbconnection.query(query, values, (error, results) => {
+            if (error) return reject(error);
+            resolve({ UserID: results.insertId });
+        });
+    });
+};
+
+// Function to add a student and also add it to the users table
+const addStudentAndUser = async (studentData) => {
+    try {
+        // Step 1: Add the student to the registeredstudents table
+        const student = await addStudent(studentData);
+
+        // Step 2: Add the student as a user to the users table
+        const user = await addUser({
+            FirstName: studentData.Name,
+            LastName: studentData.Surname,
+            Email: studentData.Email || "", // Optional email field
+            PhoneNumber: studentData.MobileNumber,
+            Address: studentData.Address,
+            UserName: studentData.FormNo, // Assuming UserName is FormNo
+            Password: studentData.Password,
+            RoleId: studentData.RoleId,
+            StudentId: student.StudentId, // Use the returned StudentId
+            BranchId: studentData.BranchId,
+            ProfilePicture: studentData.StudentImage
+        });
+
+        return {
+            success: true,
+            message: 'Student and user added successfully',
+            studentID: student.StudentId,
+            userID: user.UserID
+        };
+    } catch (error) {
+        return {
+            success: false,
+            message: 'Error occurred while adding student or user',
+            error: error.message
+        };
+    }
+};
+
 // Update a student by ID
 const updateStudent = async (StudentId, data) => {
     const { FormNo, CenRegNo, AdmissionDate, CourseID, RoleId, BranchId, RegFees, Surname, Name,
-        SonOfDaughterOf, BirthDate, GenderId, Address, City, State, Pincode, MobileNumber,
-        AlternateMobileNumber, Password, StudentImage, CourseStartDate, CourseEndDate } = data;
+        SonOfDaughterOf, BirthDate, Gender, Address, City, State, Pincode, MobileNumber, Password, StudentImage, CourseStartDate, CourseEndDate } = data;
 
     const query = `UPDATE registeredstudents SET FormNo = ?, CenRegNo = ?, AdmissionDate = ?, CourseID = ?, 
                    RoleId = ?, BranchId = ?, RegFees = ?, Surname = ?, Name = ?, SonOfDaughterOf = ?, 
-                   BirthDate = ?, GenderId = ?, Address = ?, City = ?, State = ?, Pincode = ?, MobileNumber = ?, 
-                   AlternateMobileNumber = ?, Password = ?, StudentImage = ?, CourseStartDate = ?, CourseEndDate = ?
+                   BirthDate = ?, Gender = ?, Address = ?, City = ?, State = ?, Pincode = ?, MobileNumber = ?, Password = ?, StudentImage = ?, CourseStartDate = ?, CourseEndDate = ?
                    WHERE StudentId = ?`;
 
     const values = [FormNo, CenRegNo, AdmissionDate, CourseID, RoleId, BranchId, RegFees, Surname, Name,
-        SonOfDaughterOf, BirthDate, GenderId, Address, City, State, Pincode, MobileNumber,
-        AlternateMobileNumber, Password, StudentImage, CourseStartDate, CourseEndDate, StudentId];
+        SonOfDaughterOf, BirthDate, Gender, Address, City, State, Pincode, MobileNumber, Password, StudentImage, CourseStartDate, CourseEndDate, StudentId];
 
     return new Promise((resolve, reject) => {
         dbconnection.query(query, values, (error, results) => {
@@ -83,10 +146,24 @@ const getAllStudents = async () => {
     });
 };
 
+// Get students by BranchID
+const getStudentsByBranch = async (branchID) => {
+    const query = `SELECT * FROM registeredstudents WHERE BranchId = ?`;
+
+    return new Promise((resolve, reject) => {
+        dbconnection.query(query, [branchID], (error, results) => {
+            if (error) return reject(error);
+            resolve(results);
+        });
+    });
+};
+
 module.exports = {
     addStudent,
     updateStudent,
     deleteStudent,
     getStudentById,
     getAllStudents,
+    getStudentsByBranch,
+    addStudentAndUser
 };

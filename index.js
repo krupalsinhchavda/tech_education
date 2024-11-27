@@ -5,10 +5,16 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 
-// Ensure 'uploads/customer' directory exists
-const customerUploadsDir = path.join(__dirname, 'uploads/customer');
-if (!fs.existsSync(customerUploadsDir)) {
-    fs.mkdirSync(customerUploadsDir, { recursive: true });
+// Ensure 'uploads/branchAdmin' directory exists
+const branchAdminUploadsDir = path.join(__dirname, 'uploads/branchAdmin');
+if (!fs.existsSync(branchAdminUploadsDir)) {
+    fs.mkdirSync(branchAdminUploadsDir, { recursive: true });
+}
+
+// Ensure 'uploads/student' directory exists
+const studentUploadsDir = path.join(__dirname, 'uploads/student');
+if (!fs.existsSync(studentUploadsDir)) {
+    fs.mkdirSync(studentUploadsDir, { recursive: true });
 }
 
 const app = express();

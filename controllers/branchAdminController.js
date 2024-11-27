@@ -4,7 +4,10 @@ const branchAdminService = require('../services/branchAdminService');
 const addBranchAdmin = async (req, res) => {
     try {
         const adminData = req.body;
-        const result = await branchAdminService.addBranchAdmin(adminData);
+        if (req.file) {
+            adminData.Image = `/uploads/branchAdmin/${req.file.filename}`; // Store file path
+        }
+        const result = await branchAdminService.addBranchAdminAndUser(adminData);
         res.status(201).json({ message: "Branch admin added successfully", data: result });
     } catch (error) {
         res.status(500).json({ error: error.message });

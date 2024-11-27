@@ -54,6 +54,21 @@ const getAllFees = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+// Get fees by BranchID
+const getFeesByBranch = async (req, res) => {
+    const { branchID } = req.params;
+
+    try {
+        if (!branchID) {
+            return res.status(400).json({ error: "BranchID is required" });
+        }
+
+        const result = await feesService.getFeesByBranch(branchID);
+        res.status(200).json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
 
 module.exports = {
     addFee,
@@ -61,4 +76,5 @@ module.exports = {
     deleteFee,
     getFeeById,
     getAllFees,
+    getFeesByBranch
 };
