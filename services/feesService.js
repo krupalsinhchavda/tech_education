@@ -84,7 +84,22 @@ const getAllFees = async () => {
 
 // Get fees by BranchID
 const getFeesByBranch = async (branchID) => {
-    const query = `SELECT * FROM studentfees WHERE BranchId = ?`;
+    const query = ` SELECT 
+            f.FeesId,
+            f.RegNo,
+            f.Amount,
+            f.CreatedOn,
+            f.ModifiedOn,
+            f.Name,
+            b.BranchName,
+            c.CourseName
+        FROM 
+            fees f
+        JOIN 
+            branch b ON f.BranchId = b.BranchId
+        JOIN 
+            course c ON f.CourseId = c.CourseId
+            WHERE f.BranchId = ?;`;
 
     return new Promise((resolve, reject) => {
         dbconnection.query(query, [branchID], (error, results) => {

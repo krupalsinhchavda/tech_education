@@ -4,20 +4,20 @@ const dbconnection = require('../config/database');
 const addStudent = async (data) => {
     const {
         FormNo, CenRegNo, AdmissionDate, courseId, RoleId, branchId, RegFees, Surname, Name,
-        SonOfDaughterOf, BirthDate, Gender, Address, City, State, Pincode, MobileNumber, Password, StudentImage, CourseStartDate, CourseEndDate
+        SonOfDaughterOf, Email, BirthDate, Gender, Address, City, State, Pincode, MobileNumber, Password, StudentImage, CourseStartDate, CourseEndDate
     } = data;
 
     const query = `
         INSERT INTO registeredstudents 
-        (FormNo, CenRegNo, AdmissionDate, CourseID, RoleId, BranchId, RegFees, Surname, Name, SonOfDaughterOf, 
+        (FormNo, CenRegNo, AdmissionDate, CourseID, RoleId, BranchId, RegFees, Surname, Name, SonOfDaughterOf, Email,
          BirthDate, Gender, Address, City, State, Pincode, MobileNumber, Password, 
          StudentImage, CourseStartDate, CourseEndDate)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
         FormNo, CenRegNo, AdmissionDate, courseId, RoleId, branchId, RegFees, Surname, Name,
-        SonOfDaughterOf, BirthDate, Gender, Address, City, State, Pincode, MobileNumber,
+        SonOfDaughterOf, Email, BirthDate, Gender, Address, City, State, Pincode, MobileNumber,
         Password, StudentImage, CourseStartDate, CourseEndDate
     ];
 
@@ -92,15 +92,15 @@ const addStudentAndUser = async (studentData) => {
 // Update a student by ID
 const updateStudent = async (StudentId, data) => {
     const { FormNo, CenRegNo, AdmissionDate, CourseID, RoleId, BranchId, RegFees, Surname, Name,
-        SonOfDaughterOf, BirthDate, Gender, Address, City, State, Pincode, MobileNumber, Password, StudentImage, CourseStartDate, CourseEndDate } = data;
+        SonOfDaughterOf, Email, BirthDate, Gender, Address, City, State, Pincode, MobileNumber, Password, StudentImage, CourseStartDate, CourseEndDate } = data;
 
     const query = `UPDATE registeredstudents SET FormNo = ?, CenRegNo = ?, AdmissionDate = ?, CourseID = ?, 
-                   RoleId = ?, BranchId = ?, RegFees = ?, Surname = ?, Name = ?, SonOfDaughterOf = ?, 
+                   RoleId = ?, BranchId = ?, RegFees = ?, Surname = ?, Name = ?, SonOfDaughterOf = ?, Email = ?,
                    BirthDate = ?, Gender = ?, Address = ?, City = ?, State = ?, Pincode = ?, MobileNumber = ?, Password = ?, StudentImage = ?, CourseStartDate = ?, CourseEndDate = ?
                    WHERE StudentId = ?`;
 
     const values = [FormNo, CenRegNo, AdmissionDate, CourseID, RoleId, BranchId, RegFees, Surname, Name,
-        SonOfDaughterOf, BirthDate, Gender, Address, City, State, Pincode, MobileNumber, Password, StudentImage, CourseStartDate, CourseEndDate, StudentId];
+        SonOfDaughterOf, Email, BirthDate, Gender, Address, City, State, Pincode, MobileNumber, Password, StudentImage, CourseStartDate, CourseEndDate, StudentId];
 
     return new Promise((resolve, reject) => {
         dbconnection.query(query, values, (error, results) => {
@@ -136,7 +136,18 @@ const getStudentById = async (StudentId) => {
 
 // Get all students
 const getAllStudents = async () => {
-    const query = `SELECT * FROM registeredstudents`;
+    const query = `
+        SELECT 
+            s.*,
+            b.BranchName,
+            c.CourseName
+        FROM 
+            registeredstudents s
+        JOIN 
+            branch b ON s.BranchId = b.BranchId
+        JOIN 
+            course c ON s.CourseID = c.CourseId;
+    `;
 
     return new Promise((resolve, reject) => {
         dbconnection.query(query, (error, results) => {
@@ -148,7 +159,17 @@ const getAllStudents = async () => {
 
 // Get students by BranchID
 const getStudentsByBranch = async (branchID) => {
-    const query = `SELECT * FROM registeredstudents WHERE BranchId = ?`;
+    const query = `SELECT 
+            s.*,
+            b.BranchName,
+            c.CourseName
+        FROM 
+            registeredstudents s
+        JOIN 
+            branch b ON s.BranchId = b.BranchId
+        JOIN 
+            course c ON s.CourseID = c.CourseId
+             WHERE s.BranchId = ?`;
 
     return new Promise((resolve, reject) => {
         dbconnection.query(query, [branchID], (error, results) => {
