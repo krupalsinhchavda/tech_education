@@ -71,17 +71,24 @@ const addBranchAdminAndUser = async (adminData) => {
 
 // Update a branch admin by ID
 const updateBranchAdmin = async (BranchAdminID, adminData) => {
-    const { FirstName, LastName, PhoneNumber, Address, Email, Image, UserName, Password, IsActive, BranchID, RoleId } = adminData;
+    const { FirstName, LastName, PhoneNumber, Address, Email, Image, UserName, Password, BranchID, RoleId } = adminData;
+    console.log("Updating branch admin with the following data:", adminData);
+    const imagePath = Image && typeof Image === 'object' ? JSON.stringify(Image) : Image;
+
     const query = `
         UPDATE branchadmin 
         SET FirstName = ?, LastName = ?, PhoneNumber = ?, Address = ?, Email = ?, Image = ?, 
-            UserName = ?, Password = ?, IsActive = ?, BranchID = ?, RoleId = ?
+            UserName = ?, Password = ?, BranchID = ?, RoleId = ?
         WHERE BranchAdminID = ?`;
-    const values = [FirstName, LastName, PhoneNumber, Address, Email, Image, UserName, Password, IsActive, BranchID, RoleId, BranchAdminID];
+
+    const values = [FirstName, LastName, PhoneNumber, Address, Email, imagePath, UserName, Password, BranchID, RoleId, BranchAdminID];
 
     return new Promise((resolve, reject) => {
         dbconnection.query(query, values, (error, results) => {
-            if (error) return reject(error);
+            if (error) {
+                console.error("SQL Error: ", error);
+                return reject(error);
+            }
             resolve({ affectedRows: results.affectedRows });
         });
     });
@@ -113,7 +120,11 @@ const getBranchAdminById = async (BranchAdminID) => {
 
 // Get all branch admins
 const getAllBranchAdmins = async () => {
-    const query = 'SELECT * FROM branchadmin';
+    const query = `
+        SELECT branchadmin.*, branch.BranchName 
+        FROM branchadmin
+        JOIN branch ON branchadmin.branchID = branch.branchId
+    `;
 
     return new Promise((resolve, reject) => {
         dbconnection.query(query, (error, results) => {
@@ -122,6 +133,7 @@ const getAllBranchAdmins = async () => {
         });
     });
 };
+
 
 module.exports = {
     addBranchAdmin,

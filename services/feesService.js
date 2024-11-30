@@ -1,10 +1,66 @@
 const dbconnection = require('../config/database');
+const fs = require('fs');
+const xlsx = require('xlsx');
+
+const generateFeeNumber = async () => {
+    return new Promise((resolve, reject) => {
+        dbconnection.query('SELECT MAX(FeesId) AS last_fee_id FROM fees', (error, results) => {
+            if (error) {
+                console.error('Database Query Error:', error); // Log query error
+                return reject(error);
+            }
+
+            console.log('Query Results:', results); // Log raw query results
+            let lastFeeId = results?.[0]?.last_fee_id || null; // Handle null result
+
+            let newFeeNumber;
+            if (!lastFeeId) {
+                newFeeNumber = "FEE-001"; // Initialize the first fee number
+            } else {
+                newFeeNumber = `FEE-${String(lastFeeId + 1).padStart(3, '0')}`; // Generate next fee number
+            }
+            resolve(newFeeNumber);
+        });
+    });
+};
+
+const parseExcelFileAndAddRecords = async (filePath, addFee) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const workbook = xlsx.readFile(filePath);
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+
+            const jsonData = xlsx.utils.sheet_to_json(sheet);
+            if (jsonData.length === 0) {
+                throw new Error("Excel file is empty or has invalid structure.");
+            }
+
+            const batchSize = 50;
+            let processedRecords = 0;
+
+            for (let i = 0; i < jsonData.length; i += batchSize) {
+                const batch = jsonData.slice(i, i + batchSize);
+                const batchResult = await feesService.addFeesBatch(batch);
+                processedRecords += batchResult.affectedRows;
+            }
+
+            fs.unlink(filePath, (err) => {
+                if (err) console.error("Error deleting file:", err);
+            });
+
+            resolve({ message: `${processedRecords} records added successfully`, processedRecords, totalRecords: jsonData.length });
+        } catch (error) {
+            reject(error);
+        }
+    });
+};
 
 // Add a new fee record
 const addFee = async (feeData) => {
-    const { RegNo, CourseId, BranchId, Amount, Name } = feeData;
-    const query = `INSERT INTO fees (RegNo, CourseId, BranchId, Amount, Name) VALUES (?, ?, ?, ?, ?)`;
-    const values = [RegNo, CourseId, BranchId, Amount, Name];
+    const { feeSrNo, StudentId, Amount } = feeData;
+    const query = `INSERT INTO fees (feeSrNo,StudentId, Amount) VALUES (?, ?, ?)`;
+    const values = [feeSrNo, StudentId, Amount];
 
     return new Promise((resolve, reject) => {
         dbconnection.query(query, values, (error, results) => {
@@ -16,11 +72,10 @@ const addFee = async (feeData) => {
 
 // Update a fee record by ID
 const updateFee = async (FeesId, feeData) => {
-    const { RegNo, CourseId, BranchId, Amount, Name } = feeData;
-    const query = `UPDATE fees 
-                   SET RegNo = ?, CourseId = ?, BranchId = ?, Amount = ?, Name = ? 
+    const { feeSrNo, StudentId, Amount } = feeData;
+    const query = `UPDATE fees SET feeSrNo = ?, StudentId = ?, Amount = ?
                    WHERE FeesId = ?`;
-    const values = [RegNo, CourseId, BranchId, Amount, Name, FeesId];
+    const values = [feeSrNo, StudentId, Amount, FeesId];
 
     return new Promise((resolve, reject) => {
         dbconnection.query(query, values, (error, results) => {
@@ -44,7 +99,23 @@ const deleteFee = async (FeesId) => {
 
 // Get a fee record by ID
 const getFeeById = async (FeesId) => {
-    const query = `SELECT * FROM fees WHERE FeesId = ?`;
+    const query = `SELECT  f.FeesId,
+            f.feeSrNo,
+            f.StudentId,
+            f.Amount,
+            f.CreatedOn,
+            f.ModifiedOn,
+            CONCAT(s.Surname, ' ', s.Name) AS StudentName, -- Merging Surname and Name
+            b.BranchName,
+            c.CourseName
+        FROM 
+            fees f
+        JOIN 
+            registeredstudents s ON f.StudentId = s.StudentId
+        JOIN 
+            branch b ON s.BranchId = b.BranchId
+        JOIN 
+            course c ON s.CourseId = c.CourseId WHERE f.FeesId = ?`;
 
     return new Promise((resolve, reject) => {
         dbconnection.query(query, [FeesId], (error, results) => {
@@ -59,19 +130,22 @@ const getAllFees = async () => {
     const query = `
         SELECT 
             f.FeesId,
-            f.RegNo,
+            f.feeSrNo,
+            f.StudentId,
             f.Amount,
             f.CreatedOn,
             f.ModifiedOn,
-            f.Name,
+            CONCAT(s.Surname, ' ', s.Name) AS StudentName, -- Merging Surname and Name
             b.BranchName,
             c.CourseName
         FROM 
             fees f
         JOIN 
-            branch b ON f.BranchId = b.BranchId
+            registeredstudents s ON f.StudentId = s.StudentId
         JOIN 
-            course c ON f.CourseId = c.CourseId;
+            branch b ON s.BranchId = b.BranchId
+        JOIN 
+            course c ON s.CourseId = c.CourseId;
     `;
 
     return new Promise((resolve, reject) => {
@@ -84,22 +158,28 @@ const getAllFees = async () => {
 
 // Get fees by BranchID
 const getFeesByBranch = async (branchID) => {
-    const query = ` SELECT 
+    const query = `
+        SELECT 
             f.FeesId,
-            f.RegNo,
+            f.feeSrNo,
+            f.StudentId,
             f.Amount,
             f.CreatedOn,
             f.ModifiedOn,
-            f.Name,
+            CONCAT(s.Surname, ' ', s.Name) AS StudentName, -- Merging Surname and Name
             b.BranchName,
             c.CourseName
         FROM 
             fees f
         JOIN 
-            branch b ON f.BranchId = b.BranchId
+            registeredstudents s ON f.StudentId = s.StudentId
         JOIN 
-            course c ON f.CourseId = c.CourseId
-            WHERE f.BranchId = ?;`;
+            branch b ON s.BranchId = b.BranchId
+        JOIN 
+            course c ON s.CourseId = c.CourseId
+        WHERE 
+            b.BranchId = ?; -- Filter by BranchId
+    `;
 
     return new Promise((resolve, reject) => {
         dbconnection.query(query, [branchID], (error, results) => {
@@ -109,11 +189,14 @@ const getFeesByBranch = async (branchID) => {
     });
 };
 
+
 module.exports = {
     addFee,
     updateFee,
     deleteFee,
     getFeeById,
     getAllFees,
-    getFeesByBranch
+    getFeesByBranch,
+    parseExcelFileAndAddRecords,
+    generateFeeNumber
 };

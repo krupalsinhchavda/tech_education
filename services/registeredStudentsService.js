@@ -1,4 +1,38 @@
 const dbconnection = require('../config/database');
+const fs = require('fs');
+const xlsx = require('xlsx');
+
+const parseExcelFileAndAddRecords = async (filePath, addStudentFunction) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const workbook = xlsx.readFile(filePath);
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+
+            // Convert Excel data to JSON
+            const jsonData = xlsx.utils.sheet_to_json(sheet);
+
+            // Validate if data exists
+            if (jsonData.length === 0) {
+                return reject(new Error("Excel file is empty or has invalid structure."));
+            }
+
+            // Add each record to the database
+            for (const record of jsonData) {
+                await addStudentFunction(record);
+            }
+
+            // Delete file after processing to save storage
+            fs.unlink(filePath, (err) => {
+                if (err) console.error("Error deleting file:", err);
+            });
+
+            resolve({ message: `${jsonData.length} records added successfully` });
+        } catch (error) {
+            reject(error);
+        }
+    });
+};
 
 // Add a new student
 const addStudent = async (data) => {
@@ -124,7 +158,17 @@ const deleteStudent = async (StudentId) => {
 
 // Get a student by ID
 const getStudentById = async (StudentId) => {
-    const query = `SELECT * FROM registeredstudents WHERE StudentId = ?`;
+    const query = `SELECT 
+            s.*,
+            b.BranchName,
+            c.CourseName
+        FROM 
+            registeredstudents s
+        JOIN 
+            branch b ON s.BranchId = b.BranchId
+        JOIN 
+            course c ON s.CourseID = c.CourseId
+             WHERE s.StudentId = ?`;
 
     return new Promise((resolve, reject) => {
         dbconnection.query(query, [StudentId], (error, results) => {
@@ -179,6 +223,40 @@ const getStudentsByBranch = async (branchID) => {
     });
 };
 
+const registrationService = async () => {
+    return new Promise((resolve, reject) => {
+        // Query to get the maximum StudentId from the registeredstudents table
+        dbconnection.query('SELECT MAX(StudentId) AS last_student_id FROM registeredstudents', (error, results) => {
+            if (error) {
+                console.error('Database Query Error:', error); // Log query error
+                return reject(new Error('Failed to query the database'));
+            }
+
+            // Check if results are empty or invalid
+            if (!results || results.length === 0 || results[0].last_student_id === null) {
+                return reject(new Error("No students found in the database"));
+            }
+
+            // Get the last StudentId and generate the new ID
+            const lastStudentId = results[0].last_student_id;
+            let newStudentId = lastStudentId + 1; // Increment the last student ID
+
+            // Generate FormNo and CenRegNo based on the new StudentId
+            let newFormNo = `FORM-${String(newStudentId).padStart(4, '0')}`; // Example: FORM-1001
+            let newCenRegNo = `CENREG-${String(newStudentId).padStart(4, '0')}`; // Example: CENREG-1001
+
+            console.log('Generated FormNo:', newFormNo); // Log generated FormNo
+            console.log('Generated CenRegNo:', newCenRegNo); // Log generated CenRegNo
+
+            // Resolve with the generated values
+            resolve({
+                form_no: newFormNo,
+                cen_reg_no: newCenRegNo
+            });
+        });
+    });
+};
+
 module.exports = {
     addStudent,
     updateStudent,
@@ -186,5 +264,7 @@ module.exports = {
     getStudentById,
     getAllStudents,
     getStudentsByBranch,
-    addStudentAndUser
+    addStudentAndUser,
+    parseExcelFileAndAddRecords,
+    registrationService
 };

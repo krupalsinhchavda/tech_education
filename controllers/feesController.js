@@ -69,6 +69,46 @@ const getFeesByBranch = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+const addFeeFromExcel = async (req, res) => {
+    try {
+        const file = req.file;
+
+        if (!file) {
+            return res.status(400).json({ message: "No file uploaded" });
+        }
+
+        const result = await feesService.parseExcelFileAndAddRecords(
+            file.path,
+            feesService.addFee
+        );
+
+        res.status(201).json({
+            message: `${result.message}`,
+            totalRecords: result.totalRecords,
+            processedRecords: result.processedRecords,
+        });
+    } catch (error) {
+        console.error("Error in addFeeFromExcel:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+};
+const generateFeeNumber = async (req, res) => {
+    try {
+        // Call the service to generate a new fee number
+        const newFeeNumber = await feesService.generateFeeNumber();
+
+        // Send the response with the generated fee number
+        res.status(200).json({
+            message: "Fee number generated successfully.",
+            data: { fee_number: newFeeNumber }
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Error generating fee number.",
+            error: error.message
+        });
+    }
+};
 
 module.exports = {
     addFee,
@@ -76,5 +116,7 @@ module.exports = {
     deleteFee,
     getFeeById,
     getAllFees,
-    getFeesByBranch
+    getFeesByBranch,
+    addFeeFromExcel,
+    generateFeeNumber
 };

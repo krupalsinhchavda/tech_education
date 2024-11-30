@@ -14,6 +14,7 @@ const storage = multer.diskStorage({
         cb(null, uniqueSuffix + path.extname(file.originalname)); // Generate unique filename
     }
 })
+
 const upload = multer({ storage });
 
 // Routes for managing registered students
@@ -23,5 +24,7 @@ router.delete('/:id', registeredStudentsController.deleteStudent);      // Delet
 router.get('/:id', registeredStudentsController.getStudentById);        // Get a student by ID
 router.get('/', registeredStudentsController.getAllStudents);           // Get all students
 router.get('/branch/:branchID', registeredStudentsController.getStudentsByBranch);
+router.post('/upload-excel', upload.single('file'), registeredStudentsController.addStudentsFromExcel);
+router.get('/srno/generateNumber', registeredStudentsController.generateNumber);
 
 module.exports = router;

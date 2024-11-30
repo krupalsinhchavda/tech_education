@@ -17,6 +17,18 @@ if (!fs.existsSync(studentUploadsDir)) {
     fs.mkdirSync(studentUploadsDir, { recursive: true });
 }
 
+// Ensure 'uploads/excelStudent' directory exists
+const excelStudentUploadsDir = path.join(__dirname, 'uploads/excelStudent');
+if (!fs.existsSync(excelStudentUploadsDir)) {
+    fs.mkdirSync(excelStudentUploadsDir, { recursive: true });
+}
+
+// Ensure 'uploads/excelFee' directory exists
+const excelFeeUploadsDir = path.join(__dirname, 'uploads/excelFee');
+if (!fs.existsSync(excelFeeUploadsDir)) {
+    fs.mkdirSync(excelFeeUploadsDir, { recursive: true });
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
