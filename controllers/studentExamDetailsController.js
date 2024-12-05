@@ -45,6 +45,16 @@ const getStudentExamDetailsById = async (req, res) => {
     }
 };
 
+const getStudentExamDetailsByStudentId = async (req, res) => {
+    try {
+        const StudentExamDetailsId = req.params.id;
+        const result = await studentExamDetailsService.getStudentExamDetailsByStudentId(StudentExamDetailsId);
+        res.status(200).json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 // Get all student exam details
 const getAllStudentExamDetails = async (req, res) => {
     try {
@@ -60,5 +70,6 @@ module.exports = {
     updateStudentExamDetails,
     deleteStudentExamDetails,
     getStudentExamDetailsById,
+    getStudentExamDetailsByStudentId,
     getAllStudentExamDetails,
 };

@@ -23,6 +23,12 @@ if (!fs.existsSync(excelStudentUploadsDir)) {
     fs.mkdirSync(excelStudentUploadsDir, { recursive: true });
 }
 
+// Ensure 'uploads/qualifications' directory exists
+const qualificationsUploadsDir = path.join(__dirname, 'uploads/qualifications');
+if (!fs.existsSync(qualificationsUploadsDir)) {
+    fs.mkdirSync(qualificationsUploadsDir, { recursive: true });
+}
+
 // Ensure 'uploads/excelFee' directory exists
 const excelFeeUploadsDir = path.join(__dirname, 'uploads/excelFee');
 if (!fs.existsSync(excelFeeUploadsDir)) {
@@ -48,11 +54,11 @@ const branchRoutes = require('./routes/branchRoutes');
 const courseRoutes = require('./routes/courseRoutes');
 const examRoutes = require('./routes/examRoutes');
 const feesRoutes = require('./routes/feesRoutes');
-const qualificationDetailsRoutes = require('./routes/qualificationDetailsRoutes');
 const registeredStudentsRoutes = require('./routes/registeredStudentsRoutes');
 const studentExamDetailsRoutes = require('./routes/studentExamDetailsRoutes');
 const userRoutes = require('./routes/userRoutes');
 const youtubebannerRoutes = require('./routes/youtubebannerRoutes');
+const QuizQuestionRoutes = require('./routes/QuizQuestionRoutes');
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -62,11 +68,11 @@ app.use('/api/branch', branchRoutes);
 app.use('/api/course', courseRoutes);
 app.use('/api/exam', examRoutes);
 app.use('/api/fees', feesRoutes);
-app.use('/api/qualificationDetails', qualificationDetailsRoutes);
 app.use('/api/registeredStudents', registeredStudentsRoutes);
 app.use('/api/studentExamDetails', studentExamDetailsRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/youtubebanner', youtubebannerRoutes);
+app.use('/api/quiz', QuizQuestionRoutes);
 
 
 app.listen(PORT, () => {

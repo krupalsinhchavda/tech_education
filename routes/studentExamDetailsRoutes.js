@@ -7,6 +7,7 @@ router.post('/', studentExamDetailsController.addStudentExamDetails);           
 router.put('/:id', studentExamDetailsController.updateStudentExamDetails);     // Update student exam details by ID
 router.delete('/:id', studentExamDetailsController.deleteStudentExamDetails);  // Delete student exam details by ID
 router.get('/:id', studentExamDetailsController.getStudentExamDetailsById);   // Get student exam details by ID
+router.get('/student/:id', studentExamDetailsController.getStudentExamDetailsByStudentId);   // Get student exam details by ID
 router.get('/', studentExamDetailsController.getAllStudentExamDetails);        // Get all student exam details
 
 module.exports = router;
