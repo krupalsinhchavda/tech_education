@@ -8,6 +8,7 @@ router.put('/:id', studentExamDetailsController.updateStudentExamDetails);     /
 router.delete('/:id', studentExamDetailsController.deleteStudentExamDetails);  // Delete student exam details by ID
 router.get('/:id', studentExamDetailsController.getStudentExamDetailsById);   // Get student exam details by ID
 router.get('/student/:id', studentExamDetailsController.getStudentExamDetailsByStudentId);   // Get student exam details by ID
+router.get('/BranchId/:id', studentExamDetailsController.getStudentExamDetailsByBranchId);   // Get student exam details by ID
 router.get('/', studentExamDetailsController.getAllStudentExamDetails);        // Get all student exam details
 
 module.exports = router;

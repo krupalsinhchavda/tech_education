@@ -59,6 +59,7 @@ const studentExamDetailsRoutes = require('./routes/studentExamDetailsRoutes');
 const userRoutes = require('./routes/userRoutes');
 const youtubebannerRoutes = require('./routes/youtubebannerRoutes');
 const QuizQuestionRoutes = require('./routes/QuizQuestionRoutes');
+const studentQualificationsRoutes = require('./routes/studentQualificationsRoutes');
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -73,7 +74,7 @@ app.use('/api/studentExamDetails', studentExamDetailsRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/youtubebanner', youtubebannerRoutes);
 app.use('/api/quiz', QuizQuestionRoutes);
-
+app.use('/api/studentqualifications', studentQualificationsRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);

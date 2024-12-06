@@ -61,6 +61,34 @@ const getStudentExamDetailsByStudentId = async (StudentId) => {
         });
     });
 };
+const getStudentExamDetailsByBranchId = async (BranchId) => {
+    const query = `SELECT 
+            studentexamdetails.*,
+            registeredstudents.*,
+            branch.BranchName,
+            course.CourseName
+        FROM 
+            studentexamdetails
+        INNER JOIN 
+            registeredstudents 
+        ON 
+            studentexamdetails.StudentId = registeredstudents.StudentId
+        JOIN 
+            branch 
+        ON 
+            registeredstudents.BranchId = branch.BranchId
+        JOIN 
+            course 
+        ON 
+            registeredstudents.CourseID = course.CourseId WHERE registeredstudents.BranchId = ? `;
+
+    return new Promise((resolve, reject) => {
+        dbconnection.query(query, [BranchId], (error, results) => {
+            if (error) return reject(error);
+            resolve(results);
+        });
+    });
+};
 
 // Get all student exam details
 const getAllStudentExamDetails = async () => {
@@ -103,5 +131,6 @@ module.exports = {
     deleteStudentExamDetails,
     getStudentExamDetailsById,
     getAllStudentExamDetails,
-    getStudentExamDetailsByStudentId
+    getStudentExamDetailsByStudentId,
+    getStudentExamDetailsByBranchId
 };
