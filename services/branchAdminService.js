@@ -50,7 +50,7 @@ const addBranchAdminAndUser = async (adminData) => {
         // Step 2: Add the same admin to the users table if branchadmin is added successfully
         const user = await addUser({
             ...adminData,
-            BranchId: adminData.BranchID, // Map BranchID to BranchId for users table
+            BranchId: branchAdmin.BranchAdminID, // Map BranchID to BranchId for users table
             ProfilePicture: adminData.Image // Map Image to ProfilePicture for users table
         });
 

@@ -146,12 +146,41 @@ const updateStudent = async (StudentId, data) => {
 
 // Delete a student by ID
 const deleteStudent = async (StudentId) => {
-    const query = `DELETE FROM registeredstudents WHERE StudentId = ?`;
+    const deleteUserQuery = `DELETE FROM users WHERE StudentId = ?`;
+    const deleteRegisteredStudentQuery = `DELETE FROM registeredstudents WHERE StudentId = ?`;
 
     return new Promise((resolve, reject) => {
-        dbconnection.query(query, [StudentId], (error, results) => {
+        // Start a transaction
+        dbconnection.beginTransaction((error) => {
             if (error) return reject(error);
-            resolve({ affectedRows: results.affectedRows });
+
+            // First delete from users table
+            dbconnection.query(deleteUserQuery, [StudentId], (error, userResults) => {
+                if (error) {
+                    return dbconnection.rollback(() => {
+                        reject(error);
+                    });
+                }
+
+                // Then delete from registeredstudents table
+                dbconnection.query(deleteRegisteredStudentQuery, [StudentId], (error, registeredStudentResults) => {
+                    if (error) {
+                        return dbconnection.rollback(() => {
+                            reject(error);
+                        });
+                    }
+
+                    // Commit the transaction if both deletions were successful
+                    dbconnection.commit((error) => {
+                        if (error) {
+                            return dbconnection.rollback(() => {
+                                reject(error);
+                            });
+                        }
+                        resolve({ affectedRows: userResults.affectedRows + registeredStudentResults.affectedRows });
+                    });
+                });
+            });
         });
     });
 };
