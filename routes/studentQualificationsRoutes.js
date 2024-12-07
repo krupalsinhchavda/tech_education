@@ -31,4 +31,6 @@ router.get('/:QualificationId/:StudentId', studentQualificationsController.getQu
 // Get all qualifications for a student
 router.get('/all/student/:StudentId', studentQualificationsController.getQualificationsByStudentId);
 
+router.get('/all', studentQualificationsController.getQualifications);
+
 module.exports = router;

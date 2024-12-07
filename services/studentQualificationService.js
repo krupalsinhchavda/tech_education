@@ -94,11 +94,36 @@ const getQualificationsByStudentId = async (StudentId) => {
     });
 };
 
+const getQualifications = async () => {
+    const query = `
+        SELECT 
+            CONCAT(rs.Name,' ',rs.Surname) AS studentName, 
+            sq.*
+        FROM 
+            registeredstudents rs
+        INNER JOIN 
+            studentqualifications sq
+        ON 
+            rs.StudentId = sq.StudentId;
+    `;
+
+    return new Promise((resolve, reject) => {
+        dbconnection.query(query, (error, results) => {
+            if (error) {
+                return reject(error);
+            }
+            resolve(results);
+        });
+    });
+};
+
+
 module.exports = {
     addQualification,
     updateQualification,
     deleteQualification,
     getQualificationById,
     getQualificationsByStudentId,
-    addQualificationAndStudent
+    addQualificationAndStudent,
+    getQualifications
 };

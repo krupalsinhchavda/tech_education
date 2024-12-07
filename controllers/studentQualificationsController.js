@@ -116,10 +116,28 @@ const getQualificationsByStudentId = async (req, res) => {
     }
 };
 
+// Get all qualifications for a student
+const getQualifications = async (req, res) => {
+    try {
+        const results = await studentQualificationsService.getQualifications();
+        res.status(200).json({
+            success: true,
+            data: results,
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching qualifications',
+            error: error.message,
+        });
+    }
+};
+
 module.exports = {
     addQualification,
     updateQualification,
     deleteQualification,
     getQualificationById,
-    getQualificationsByStudentId
+    getQualificationsByStudentId,
+    getQualifications
 };
