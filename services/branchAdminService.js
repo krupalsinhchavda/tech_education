@@ -96,12 +96,41 @@ const updateBranchAdmin = async (BranchAdminID, adminData) => {
 
 // Delete a branch admin by ID
 const deleteBranchAdmin = async (BranchAdminID) => {
-    const query = 'DELETE FROM branchadmin WHERE BranchAdminID = ?';
+    const deleteUsersQuery = `DELETE FROM users WHERE BranchId = ?`;
+    const deleteBranchAdminQuery = `DELETE FROM branchadmin WHERE BranchAdminID = ?`;
 
     return new Promise((resolve, reject) => {
-        dbconnection.query(query, [BranchAdminID], (error, results) => {
+        // Start a transaction
+        dbconnection.beginTransaction((error) => {
             if (error) return reject(error);
-            resolve({ affectedRows: results.affectedRows });
+
+            // First delete from users table
+            dbconnection.query(deleteUsersQuery, [BranchAdminID], (error, userResults) => {
+                if (error) {
+                    return dbconnection.rollback(() => {
+                        reject(error);
+                    });
+                }
+
+                // Then delete from branchadmin table
+                dbconnection.query(deleteBranchAdminQuery, [BranchAdminID], (error, branchAdminResults) => {
+                    if (error) {
+                        return dbconnection.rollback(() => {
+                            reject(error);
+                        });
+                    }
+
+                    // Commit the transaction if both deletions were successful
+                    dbconnection.commit((error) => {
+                        if (error) {
+                            return dbconnection.rollback(() => {
+                                reject(error);
+                            });
+                        }
+                        resolve({ affectedRows: userResults.affectedRows + branchAdminResults.affectedRows });
+                    });
+                });
+            });
         });
     });
 };
