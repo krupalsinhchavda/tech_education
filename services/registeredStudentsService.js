@@ -100,7 +100,7 @@ const addStudentAndUser = async (studentData) => {
             Email: studentData.Email || "", // Optional email field
             PhoneNumber: studentData.MobileNumber,
             Address: studentData.Address,
-            UserName: studentData.FormNo, // Assuming UserName is FormNo
+            UserName: studentData.Name + studentData.Surname, // Assuming UserName
             Password: studentData.Password,
             RoleId: studentData.RoleId,
             StudentId: student.StudentId, // Use the returned StudentId
