@@ -37,20 +37,20 @@ const parseExcelFileAndAddRecords = async (filePath, addStudentFunction) => {
 // Add a new student
 const addStudent = async (data) => {
     const {
-        FormNo, CenRegNo, AdmissionDate, courseId, RoleId, branchId, RegFees, Surname, Name,
+        FormNo, CenRegNo, AdmissionDate, courseId, RoleId, branchId, CertificateFees, RegFees, Surname, Name,
         SonOfDaughterOf, Email, BirthDate, Gender, Address, City, State, Pincode, MobileNumber, Password, StudentImage, CourseStartDate, CourseEndDate
     } = data;
 
     const query = `
         INSERT INTO registeredstudents 
-        (FormNo, CenRegNo, AdmissionDate, CourseID, RoleId, BranchId, RegFees, Surname, Name, SonOfDaughterOf, Email,
+        (FormNo, CenRegNo, AdmissionDate, CourseID, RoleId, BranchId, CertificateFees, RegFees, Surname, Name, SonOfDaughterOf, Email,
          BirthDate, Gender, Address, City, State, Pincode, MobileNumber, Password, 
          StudentImage, CourseStartDate, CourseEndDate)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
-        FormNo, CenRegNo, AdmissionDate, courseId, RoleId, branchId, RegFees, Surname, Name,
+        FormNo, CenRegNo, AdmissionDate, courseId, RoleId, branchId, CertificateFees, RegFees, Surname, Name,
         SonOfDaughterOf, Email, BirthDate, Gender, Address, City, State, Pincode, MobileNumber,
         Password, StudentImage, CourseStartDate, CourseEndDate
     ];
@@ -125,16 +125,16 @@ const addStudentAndUser = async (studentData) => {
 
 // Update a student by ID
 const updateStudent = async (StudentId, data) => {
-    const { FormNo, CenRegNo, AdmissionDate, CourseID, RoleId, BranchId, RegFees, Surname, Name,
-        SonOfDaughterOf, Email, BirthDate, Gender, Address, City, State, Pincode, MobileNumber, Password, StudentImage, CourseStartDate, CourseEndDate } = data;
+    const { FormNo, CenRegNo, AdmissionDate, CourseID, RoleId, BranchId, CertificateFees, RegFees, Surname, Name,
+        SonOfDaughterOf, Email, BirthDate, Gender, Address, City, State, Pincode, MobileNumber, CourseStartDate, CourseEndDate } = data;
 
     const query = `UPDATE registeredstudents SET FormNo = ?, CenRegNo = ?, AdmissionDate = ?, CourseID = ?, 
-                   RoleId = ?, BranchId = ?, RegFees = ?, Surname = ?, Name = ?, SonOfDaughterOf = ?, Email = ?,
-                   BirthDate = ?, Gender = ?, Address = ?, City = ?, State = ?, Pincode = ?, MobileNumber = ?, Password = ?, StudentImage = ?, CourseStartDate = ?, CourseEndDate = ?
+                   RoleId = ?, BranchId = ?, CertificateFees = ?, RegFees = ?, Surname = ?, Name = ?, SonOfDaughterOf = ?, Email = ?,
+                   BirthDate = ?, Gender = ?, Address = ?, City = ?, State = ?, Pincode = ?, MobileNumber = ?, CourseStartDate = ?, CourseEndDate = ?
                    WHERE StudentId = ?`;
 
-    const values = [FormNo, CenRegNo, AdmissionDate, CourseID, RoleId, BranchId, RegFees, Surname, Name,
-        SonOfDaughterOf, Email, BirthDate, Gender, Address, City, State, Pincode, MobileNumber, Password, StudentImage, CourseStartDate, CourseEndDate, StudentId];
+    const values = [FormNo, CenRegNo, AdmissionDate, CourseID, RoleId, BranchId, CertificateFees, RegFees, Surname, Name,
+        SonOfDaughterOf, Email, BirthDate, Gender, Address, City, State, Pincode, MobileNumber, CourseStartDate, CourseEndDate, StudentId];
 
     return new Promise((resolve, reject) => {
         dbconnection.query(query, values, (error, results) => {
@@ -148,21 +148,24 @@ const updateStudent = async (StudentId, data) => {
 const deleteStudent = async (StudentId) => {
     const deleteUserQuery = `DELETE FROM users WHERE StudentId = ?`;
     const deleteRegisteredStudentQuery = `DELETE FROM registeredstudents WHERE StudentId = ?`;
+    const deleteStudentQualificationQuery = `DELETE FROM studentqualifications WHERE StudentId = ?`;
 
     return new Promise((resolve, reject) => {
         // Start a transaction
         dbconnection.beginTransaction((error) => {
-            if (error) return reject(error);
+            if (error) {
+                return reject(error);
+            }
 
-            // First delete from users table
-            dbconnection.query(deleteUserQuery, [StudentId], (error, userResults) => {
+            // First, delete from studentqualifications table
+            dbconnection.query(deleteStudentQualificationQuery, [StudentId], (error, qualificationResults) => {
                 if (error) {
                     return dbconnection.rollback(() => {
                         reject(error);
                     });
                 }
 
-                // Then delete from registeredstudents table
+                // Then, delete from registeredstudents table
                 dbconnection.query(deleteRegisteredStudentQuery, [StudentId], (error, registeredStudentResults) => {
                     if (error) {
                         return dbconnection.rollback(() => {
@@ -170,14 +173,26 @@ const deleteStudent = async (StudentId) => {
                         });
                     }
 
-                    // Commit the transaction if both deletions were successful
-                    dbconnection.commit((error) => {
+                    // Finally, delete from users table
+                    dbconnection.query(deleteUserQuery, [StudentId], (error, userResults) => {
                         if (error) {
                             return dbconnection.rollback(() => {
                                 reject(error);
                             });
                         }
-                        resolve({ affectedRows: userResults.affectedRows + registeredStudentResults.affectedRows });
+
+                        // Commit the transaction if all deletions were successful
+                        dbconnection.commit((error) => {
+                            if (error) {
+                                return dbconnection.rollback(() => {
+                                    reject(error);
+                                });
+                            }
+                            resolve({
+                                message: 'Student deleted successfully',
+                                affectedRows: qualificationResults.affectedRows + registeredStudentResults.affectedRows + userResults.affectedRows,
+                            });
+                        });
                     });
                 });
             });
