@@ -37,7 +37,7 @@ const parseExcelFileAndAddRecords = async (filePath, addStudentFunction) => {
 // Add a new student
 const addStudent = async (data) => {
     const {
-        FormNo, CenRegNo, AdmissionDate, courseId, RoleId, branchId, CertificateFees, RegFees, Surname, Name,
+        FormNo, CenRegNo, AdmissionDate, courseId, RoleId, BranchId, CertificateFees, RegFees, Surname, Name,
         SonOfDaughterOf, Email, BirthDate, Gender, Address, City, State, Pincode, MobileNumber, Password, StudentImage, CourseStartDate, CourseEndDate
     } = data;
 
@@ -50,7 +50,7 @@ const addStudent = async (data) => {
     `;
 
     const values = [
-        FormNo, CenRegNo, AdmissionDate, courseId, RoleId, branchId, CertificateFees, RegFees, Surname, Name,
+        FormNo, CenRegNo, AdmissionDate, courseId, RoleId, BranchId, CertificateFees, RegFees, Surname, Name,
         SonOfDaughterOf, Email, BirthDate, Gender, Address, City, State, Pincode, MobileNumber,
         Password, StudentImage, CourseStartDate, CourseEndDate
     ];
@@ -66,7 +66,7 @@ const addStudent = async (data) => {
 const addUser = async (userData) => {
     const {
         FirstName, LastName, Email, PhoneNumber, Address, UserName, Password, RoleId, StudentId,
-        branchId, ProfilePicture
+        BranchId, ProfilePicture
     } = userData;
 
     const query = `
@@ -76,7 +76,7 @@ const addUser = async (userData) => {
     `;
 
     const values = [
-        FirstName, LastName, Email, PhoneNumber, Address, UserName, Password, RoleId, StudentId, branchId, ProfilePicture
+        FirstName, LastName, Email, PhoneNumber, Address, UserName, Password, RoleId, StudentId, BranchId, ProfilePicture
     ];
 
     return new Promise((resolve, reject) => {
